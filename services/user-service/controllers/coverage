@@ -1,0 +1,11 @@
+mode: set
+user-service/controllers/user_controller.go:25.29,28.48 2 1
+user-service/controllers/user_controller.go:28.48,31.3 2 1
+user-service/controllers/user_controller.go:32.2,41.16 2 1
+user-service/controllers/user_controller.go:41.16,44.3 2 1
+user-service/controllers/user_controller.go:45.2,45.56 1 1
+user-service/controllers/user_controller.go:49.29,53.48 3 1
+user-service/controllers/user_controller.go:53.48,56.3 2 1
+user-service/controllers/user_controller.go:57.2,59.16 3 1
+user-service/controllers/user_controller.go:59.16,62.3 2 1
+user-service/controllers/user_controller.go:63.2,64.81 2 1

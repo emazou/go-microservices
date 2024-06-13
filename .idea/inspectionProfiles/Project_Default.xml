@@ -4,6 +4,7 @@
     <inspection_tool class="GoDfaErrorMayBeNotNil" enabled="true" level="WARNING" enabled_by_default="true">
       <functions>
         <function importPath="user-service/repositories" name="GetUserByEmail" />
+        <function importPath="user-service/services" name="SignInService" />
       </functions>
     </inspection_tool>
   </profile>

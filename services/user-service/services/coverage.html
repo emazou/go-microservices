@@ -57,7 +57,7 @@
 				
 				<option value="file0">user-service/services/token_service.go (100.0%)</option>
 				
-				<option value="file1">user-service/services/user_service.go (84.2%)</option>
+				<option value="file1">user-service/services/user_service.go (93.8%)</option>
 				
 				</select>
 			</div>
@@ -162,13 +162,9 @@ func SignUpService(name, lastName, email, password, address, paymentMethod, role
         // Create the user
         err := repositories.CreateUser(user)
         if err != nil </span><span class="cov0" title="0">{
-                return user, err
+                return nil, err
         }</span>
-        <span class="cov8" title="1">user, err = repositories.GetUserByEmail(email)
-        if err != nil </span><span class="cov0" title="0">{
-                return user, err
-        }</span>
-        <span class="cov8" title="1">return user, nil</span>
+        <span class="cov8" title="1">return repositories.GetUserByEmail(email)</span>
 }
 
 // SignInService authenticates a user by email and password and returns the user and the error if any occurred
@@ -180,12 +176,16 @@ func SignInService(email, password string) (*models.User, error) <span class="co
         }</span>
         // Compare the password with the hashed password
         <span class="cov8" title="1">err = bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(password))
-        if err != nil </span><span class="cov0" title="0">{
-                return user, errors.New("invalid email or password")
-        }</span>
-
-        <span class="cov8" title="1">return user, nil</span>
+        return user, err</span>
 }
+
+func GetAllUsersService() ([]models.User, error) <span class="cov8" title="1">{
+        return repositories.GetAllUsers()
+}</span>
+
+func DeleteUseByIDService(id string) error <span class="cov8" title="1">{
+        return repositories.DeleteUserByID(id)
+}</span>
 </pre>
 		
 		</div>

@@ -9,48 +9,50 @@ import (
 )
 
 // SignUpService creates a new user in the database and returns the user and the error if any occurred
-func SignUpService(name, lastName, email, password, address, paymentMethod, role string) (*models.User, error) {
+func SignUpService(userIn models.SignUpUserInput) (*models.User, error) {
 	// Define the email regex pattern to validate the email
 	emailRegex := `^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$`
-	if matched := regexp.MustCompile(emailRegex).MatchString(email); !matched {
+	if matched := regexp.MustCompile(emailRegex).MatchString(userIn.Email); !matched {
 		return nil, errors.New("invalid email address")
 	}
 	// Hash the password
-	hashedPassword, _ := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
+	hashedPassword, _ := bcrypt.GenerateFromPassword([]byte(userIn.Password), bcrypt.DefaultCost)
 	// Create a new user
 	user := &models.User{
-		Name:          name,
-		LastName:      lastName,
-		Email:         email,
+		Name:          userIn.Name,
+		LastName:      userIn.LastName,
+		Email:         userIn.Email,
 		Password:      string(hashedPassword),
-		Address:       address,
-		PaymentMethod: models.PaymentMethod(paymentMethod),
-		Role:          models.Role(role),
+		Address:       userIn.Address,
+		PaymentMethod: models.PaymentMethod(userIn.PaymentMethod),
+		Role:          models.Role(userIn.Role),
 	}
 	// Create the user
 	err := repositories.CreateUser(user)
 	if err != nil {
-		return user, err
+		return nil, err
 	}
-	user, err = repositories.GetUserByEmail(email)
-	if err != nil {
-		return user, err
-	}
-	return user, nil
+	return repositories.GetUserByEmail(user.Email)
 }
 
 // SignInService authenticates a user by email and password and returns the user and the error if any occurred
-func SignInService(email, password string) (*models.User, error) {
+func SignInService(userIn models.SignInUserInput) (*models.User, error) {
 	// Retrieve the user by email
-	user, err := repositories.GetUserByEmail(email)
+	user, err := repositories.GetUserByEmail(userIn.Email)
 	if err != nil {
 		return user, err
 	}
 	// Compare the password with the hashed password
-	err = bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(password))
-	if err != nil {
-		return user, errors.New("invalid email or password")
-	}
+	err = bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(userIn.Password))
+	return user, err
+}
 
-	return user, nil
+// GetAllUsersService retrieves all users from the database and returns the users and the error if any occurred
+func GetAllUsersService() ([]models.User, error) {
+	return repositories.GetAllUsers()
+}
+
+// DeleteUseByIDService deletes a user from the database by its ID and returns the error if any occurred
+func DeleteUseByIDService(id string) error {
+	return repositories.DeleteUserByID(id)
 }
