@@ -10,13 +10,10 @@ import (
 	"os"
 	"testing"
 	"user-service/config"
+	"user-service/middlewares"
 	"user-service/models"
-)
-
-const (
-	BaseUrl   = "/api/v1/users"
-	SignupUrl = "/signup"
-	SigninUrl = "/signin"
+	"user-service/services"
+	"user-service/utils"
 )
 
 func TestMain(m *testing.M) {
@@ -29,10 +26,12 @@ func TestMain(m *testing.M) {
 func setupTestRouter() *gin.Engine {
 	// Set up the routes
 	router := gin.Default()
-	v1 := router.Group(BaseUrl)
+	jwtService := services.NewJWTService()
+	v1 := router.Group(utils.BaseUrl)
 	{
-		v1.POST(SignupUrl, SignUp)
-		v1.POST(SigninUrl, SignIn)
+		v1.POST(utils.SignupUrl, SignUp)
+		v1.POST(utils.SigninUrl, SignIn)
+		v1.DELETE("/:id", middlewares.AuthMiddleware(jwtService), DeleteUserByID)
 	}
 	return router
 }
@@ -47,11 +46,11 @@ func TestSignUp(t *testing.T) {
 		Email:         "john.doe@example.com",
 		Password:      "password",
 		Address:       "123 Main St",
-		PaymentMethod: string(models.CreditCard),
-		Role:          string(models.Buyer),
+		PaymentMethod: models.CreditCard,
+		Role:          models.Buyer,
 	}
 	jsonInput, _ := json.Marshal(input)
-	req, _ := http.NewRequest(http.MethodPost, BaseUrl+SignupUrl, bytes.NewBuffer(jsonInput))
+	req, _ := http.NewRequest(http.MethodPost, utils.BaseUrl+utils.SignupUrl, bytes.NewBuffer(jsonInput))
 	req.Header.Set("Content-Type", "application/json")
 
 	w := httptest.NewRecorder()
@@ -68,8 +67,8 @@ func TestSignUp(t *testing.T) {
 	assert.Equal(t, input.LastName, data["last_name"])
 	assert.Equal(t, input.Email, data["email"])
 	assert.Equal(t, input.Address, data["address"])
-	assert.Equal(t, input.PaymentMethod, data["payment_method"])
-	assert.Equal(t, input.Role, data["role"])
+	assert.Equal(t, string(input.PaymentMethod), data["payment_method"])
+	assert.Equal(t, string(input.Role), data["role"])
 }
 
 func TestSignUpInvalidInput(t *testing.T) {
@@ -77,7 +76,7 @@ func TestSignUpInvalidInput(t *testing.T) {
 	router := setupTestRouter()
 
 	input := `{"name": "Invalid name"}`
-	req, _ := http.NewRequest(http.MethodPost, BaseUrl+SignupUrl, bytes.NewBuffer([]byte(input)))
+	req, _ := http.NewRequest(http.MethodPost, utils.BaseUrl+utils.SignupUrl, bytes.NewBuffer([]byte(input)))
 	req.Header.Set("Content-Type", "application/json")
 	w := httptest.NewRecorder()
 	router.ServeHTTP(w, req)
@@ -95,11 +94,11 @@ func TestSignUpErrorService(t *testing.T) {
 		Email:         "john.doe@example.com",
 		Password:      "password",
 		Address:       "123 Main St",
-		PaymentMethod: string(models.CreditCard),
-		Role:          string(models.Buyer),
+		PaymentMethod: models.CreditCard,
+		Role:          models.Buyer,
 	}
 	jsonInput, _ := json.Marshal(input)
-	req, _ := http.NewRequest(http.MethodPost, BaseUrl+SignupUrl, bytes.NewBuffer(jsonInput))
+	req, _ := http.NewRequest(http.MethodPost, utils.BaseUrl+utils.SignupUrl, bytes.NewBuffer(jsonInput))
 	req.Header.Set("Content-Type", "application/json")
 	w := httptest.NewRecorder()
 
@@ -115,7 +114,7 @@ func TestSignIn(t *testing.T) {
 		Password: "password",
 	}
 	jsonInput, _ := json.Marshal(input)
-	req, _ := http.NewRequest(http.MethodPost, BaseUrl+SigninUrl, bytes.NewBuffer(jsonInput))
+	req, _ := http.NewRequest(http.MethodPost, utils.BaseUrl+utils.SigninUrl, bytes.NewBuffer(jsonInput))
 	req.Header.Set("Content-Type", "application/json")
 	w := httptest.NewRecorder()
 	r.ServeHTTP(w, req)
@@ -127,7 +126,7 @@ func TestSignInInvalidInput(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 	r := setupTestRouter()
 	input := `{}`
-	req, _ := http.NewRequest(http.MethodPost, BaseUrl+SigninUrl, bytes.NewBuffer([]byte(input)))
+	req, _ := http.NewRequest(http.MethodPost, utils.BaseUrl+utils.SigninUrl, bytes.NewBuffer([]byte(input)))
 	req.Header.Set("Content-Type", "application/json")
 	w := httptest.NewRecorder()
 	r.ServeHTTP(w, req)
@@ -143,10 +142,56 @@ func TestSignInInvalidCredentials(t *testing.T) {
 		Password: "password",
 	}
 	jsonInput, _ := json.Marshal(input)
-	req, _ := http.NewRequest(http.MethodPost, BaseUrl+SigninUrl, bytes.NewBuffer(jsonInput))
+	req, _ := http.NewRequest(http.MethodPost, utils.BaseUrl+utils.SigninUrl, bytes.NewBuffer(jsonInput))
 	req.Header.Set("Content-Type", "application/json")
 	w := httptest.NewRecorder()
 	r.ServeHTTP(w, req)
 
 	assert.Equal(t, http.StatusUnauthorized, w.Code)
+}
+
+func TestDeleteUserByID(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+	r := setupTestRouter()
+	users, err := services.GetAllUsersService()
+	if err != nil {
+		t.Errorf("An error occurred: %v", err)
+	}
+	user := users[0]
+	jwtService := services.NewJWTService()
+	token, _ := jwtService.GenerateToken(user.ID, user.Email)
+	req, _ := http.NewRequest(http.MethodDelete, utils.BaseUrl+"/"+user.ID, nil)
+	req.Header.Set("Authorization", "Bearer "+token)
+	req.Header.Set("Content-Type", "application/json")
+	w := httptest.NewRecorder()
+	r.ServeHTTP(w, req)
+
+	assert.Equal(t, http.StatusOK, w.Code)
+}
+
+func TestDeleteUserByIDWithoutToken(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+	r := setupTestRouter()
+	jwtService := services.NewJWTService()
+	token, _ := jwtService.GenerateToken("13", "test@gmail.com")
+	req, _ := http.NewRequest(http.MethodDelete, utils.BaseUrl+"/1", nil)
+	req.Header.Set("Authorization", "Bearer "+token)
+	req.Header.Set("Content-Type", "application/json")
+	w := httptest.NewRecorder()
+	r.ServeHTTP(w, req)
+	assert.Equal(t, http.StatusUnauthorized, w.Code)
+}
+
+func TestDeleteUserByIDWithTokenInvalidID(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+	r := setupTestRouter()
+	jwtService := services.NewJWTService()
+	token, _ := jwtService.GenerateToken("1", "test@gmail.com")
+	req, _ := http.NewRequest(http.MethodDelete, utils.BaseUrl+"/1", nil)
+	req.Header.Set("Authorization", "Bearer "+token)
+	req.Header.Set("Content-Type", "application/json")
+	w := httptest.NewRecorder()
+	r.ServeHTTP(w, req)
+
+	assert.Equal(t, http.StatusInternalServerError, w.Code)
 }

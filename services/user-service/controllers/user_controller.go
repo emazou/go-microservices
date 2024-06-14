@@ -3,6 +3,7 @@ package controllers
 import (
 	"github.com/gin-gonic/gin"
 	"net/http"
+	"strings"
 	"user-service/models"
 	"user-service/services"
 )
@@ -40,7 +41,7 @@ func SignIn(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
-	userAuthenticated, err := services.SignInService(user.Email, user.Password)
+	userAuthenticated, err := services.SignInService(user)
 	generateToken, _ := jwtService.GenerateToken(userAuthenticated.ID, userAuthenticated.Email)
 	if err != nil {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": err.Error()})
@@ -55,4 +56,22 @@ func SignIn(c *gin.Context) {
 		Role:          userAuthenticated.Role,
 	}
 	c.JSON(http.StatusOK, gin.H{"data": userResponse, "token": generateToken})
+}
+
+// DeleteUserByID deletes a user from the system by its ID
+func DeleteUserByID(c *gin.Context) {
+	jwt := c.GetHeader("Authorization")
+	jwtService := services.NewJWTService()
+	jwtDecode, _ := jwtService.DecodeToken(strings.Replace(jwt, "Bearer ", "", 1))
+	id := c.Param("id")
+	if jwtDecode.ID == "" || jwtDecode.ID != id {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
+		return
+	}
+	err := services.DeleteUserByIDService(id)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"message": "User deleted successfully"})
 }

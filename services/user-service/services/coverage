@@ -7,6 +7,11 @@ user-service/services/token_service.go:50.93,52.3 1 1
 user-service/services/token_service.go:53.2,53.16 1 1
 user-service/services/token_service.go:53.16,55.3 1 1
 user-service/services/token_service.go:56.2,56.17 1 1
+user-service/services/token_service.go:59.55,61.97 2 0
+user-service/services/token_service.go:61.97,63.3 1 0
+user-service/services/token_service.go:64.2,64.16 1 0
+user-service/services/token_service.go:64.16,66.3 1 0
+user-service/services/token_service.go:67.2,67.20 1 0
 user-service/services/user_service.go:12.73,15.83 2 1
 user-service/services/user_service.go:15.83,17.3 1 1
 user-service/services/user_service.go:19.2,32.16 4 1
@@ -16,4 +21,4 @@ user-service/services/user_service.go:39.73,42.16 2 1
 user-service/services/user_service.go:42.16,44.3 1 1
 user-service/services/user_service.go:46.2,47.18 2 1
 user-service/services/user_service.go:51.50,53.2 1 1
-user-service/services/user_service.go:56.44,58.2 1 1
+user-service/services/user_service.go:56.45,58.2 1 1

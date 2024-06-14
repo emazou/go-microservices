@@ -35,3 +35,7 @@ func TestJwtServiceValidateTokenInvalidToken(t *testing.T) {
 	_, err := jwtService.ValidateToken("invalid-token")
 	assert.Error(t, err, "An error should occur")
 }
+
+func TestDecodeToken(t *testing.T) {
+
+}

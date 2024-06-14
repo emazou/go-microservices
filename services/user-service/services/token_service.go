@@ -18,6 +18,7 @@ func init() {
 type JWTService interface {
 	GenerateToken(id, email string) (string, error)
 	ValidateToken(token string) (*jwt.Token, error)
+	DecodeToken(token string) (*Claims, error)
 }
 
 type jwtService struct{}
@@ -54,4 +55,15 @@ func (j jwtService) ValidateToken(token string) (*jwt.Token, error) {
 		return nil, err
 	}
 	return tkn, nil
+}
+
+func (j *jwtService) DecodeToken(token string) (*Claims, error) {
+	claims := &Claims{}
+	_, err := jwt.ParseWithClaims(token, claims, func(token *jwt.Token) (interface{}, error) {
+		return jwtKey, nil
+	})
+	if err != nil {
+		return nil, err
+	}
+	return claims, nil
 }

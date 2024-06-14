@@ -57,7 +57,7 @@
 				
 				<option value="file0">user-service/services/token_service.go (100.0%)</option>
 				
-				<option value="file1">user-service/services/user_service.go (93.8%)</option>
+				<option value="file1">user-service/services/user_service.go (100.0%)</option>
 				
 				</select>
 			</div>
@@ -141,49 +141,51 @@ import (
 )
 
 // SignUpService creates a new user in the database and returns the user and the error if any occurred
-func SignUpService(name, lastName, email, password, address, paymentMethod, role string) (*models.User, error) <span class="cov8" title="1">{
+func SignUpService(userIn models.SignUpUserInput) (*models.User, error) <span class="cov8" title="1">{
         // Define the email regex pattern to validate the email
         emailRegex := `^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$`
-        if matched := regexp.MustCompile(emailRegex).MatchString(email); !matched </span><span class="cov8" title="1">{
+        if matched := regexp.MustCompile(emailRegex).MatchString(userIn.Email); !matched </span><span class="cov8" title="1">{
                 return nil, errors.New("invalid email address")
         }</span>
         // Hash the password
-        <span class="cov8" title="1">hashedPassword, _ := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
+        <span class="cov8" title="1">hashedPassword, _ := bcrypt.GenerateFromPassword([]byte(userIn.Password), bcrypt.DefaultCost)
         // Create a new user
         user := &amp;models.User{
-                Name:          name,
-                LastName:      lastName,
-                Email:         email,
+                Name:          userIn.Name,
+                LastName:      userIn.LastName,
+                Email:         userIn.Email,
                 Password:      string(hashedPassword),
-                Address:       address,
-                PaymentMethod: models.PaymentMethod(paymentMethod),
-                Role:          models.Role(role),
+                Address:       userIn.Address,
+                PaymentMethod: models.PaymentMethod(userIn.PaymentMethod),
+                Role:          models.Role(userIn.Role),
         }
         // Create the user
         err := repositories.CreateUser(user)
-        if err != nil </span><span class="cov0" title="0">{
+        if err != nil </span><span class="cov8" title="1">{
                 return nil, err
         }</span>
-        <span class="cov8" title="1">return repositories.GetUserByEmail(email)</span>
+        <span class="cov8" title="1">return repositories.GetUserByEmail(user.Email)</span>
 }
 
 // SignInService authenticates a user by email and password and returns the user and the error if any occurred
-func SignInService(email, password string) (*models.User, error) <span class="cov8" title="1">{
+func SignInService(userIn models.SignInUserInput) (*models.User, error) <span class="cov8" title="1">{
         // Retrieve the user by email
-        user, err := repositories.GetUserByEmail(email)
+        user, err := repositories.GetUserByEmail(userIn.Email)
         if err != nil </span><span class="cov8" title="1">{
                 return user, err
         }</span>
         // Compare the password with the hashed password
-        <span class="cov8" title="1">err = bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(password))
+        <span class="cov8" title="1">err = bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(userIn.Password))
         return user, err</span>
 }
 
+// GetAllUsersService retrieves all users from the database and returns the users and the error if any occurred
 func GetAllUsersService() ([]models.User, error) <span class="cov8" title="1">{
         return repositories.GetAllUsers()
 }</span>
 
-func DeleteUseByIDService(id string) error <span class="cov8" title="1">{
+// DeleteUseByIDService deletes a user from the database by its ID and returns the error if any occurred
+func DeleteUserByIDService(id string) error <span class="cov8" title="1">{
         return repositories.DeleteUserByID(id)
 }</span>
 </pre>

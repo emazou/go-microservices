@@ -74,65 +74,77 @@
 import (
         "github.com/gin-gonic/gin"
         "net/http"
+        "strings"
+        "user-service/models"
         "user-service/services"
 )
-
-type CreateUserInput struct {
-        Name          string `json:"name" binding:"required"`
-        LastName      string `json:"last_name" binding:"required"`
-        Email         string `json:"email" binding:"required,email"`
-        Password      string `json:"password" binding:"required"`
-        Address       string `json:"address" binding:"required"`
-        PaymentMethod string `json:"payment_method" binding:"required"`
-        Role          string `json:"role" binding:"required"`
-}
-
-type SignInUserInput struct {
-        Email    string `json:"email" binding:"required,email"`
-        Password string `json:"password" binding:"required"`
-}
 
 // SignUp creates a new user account in the system with the provided details
 func SignUp(c *gin.Context) <span class="cov8" title="1">{
         // Create a new user
-        var user CreateUserInput
+        var user models.SignUpUserInput
         if err := c.ShouldBindJSON(&amp;user); err != nil </span><span class="cov8" title="1">{
                 c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
                 return
         }</span>
-        <span class="cov8" title="1">userCreated, err := services.SignUpService(
-                user.Name,
-                user.LastName,
-                user.Email,
-                user.Password,
-                user.Address,
-                user.PaymentMethod,
-                user.Role,
-        )
+        <span class="cov8" title="1">userCreated, err := services.SignUpService(user)
         if err != nil </span><span class="cov8" title="1">{
                 c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
                 return
         }</span>
-        <span class="cov8" title="1">c.JSON(http.StatusCreated, gin.H{"data": userCreated})</span>
+        <span class="cov8" title="1">userResponse := models.UserResponse{
+                Name:          userCreated.Name,
+                LastName:      userCreated.LastName,
+                Email:         userCreated.Email,
+                Address:       userCreated.Address,
+                PaymentMethod: userCreated.PaymentMethod,
+                Role:          userCreated.Role,
+        }
+        c.JSON(http.StatusCreated, gin.H{"data": userResponse})</span>
 }
 
 // SignIn authenticates a user by email and password
 func SignIn(c *gin.Context) <span class="cov8" title="1">{
         // Get the email and password from the request
-        var user SignInUserInput
+        var user models.SignInUserInput
         jwtService := services.NewJWTService()
         if err := c.ShouldBindJSON(&amp;user); err != nil </span><span class="cov8" title="1">{
                 c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
                 return
         }</span>
-        <span class="cov8" title="1">userAuthenticated, err := services.SignInService(user.Email, user.Password)
+        <span class="cov8" title="1">userAuthenticated, err := services.SignInService(user)
         generateToken, _ := jwtService.GenerateToken(userAuthenticated.ID, userAuthenticated.Email)
         if err != nil </span><span class="cov8" title="1">{
                 c.JSON(http.StatusUnauthorized, gin.H{"error": err.Error()})
                 return
         }</span>
-        <span class="cov8" title="1">userAuthenticated.Password = ""
-        c.JSON(http.StatusOK, gin.H{"data": userAuthenticated, "token": generateToken})</span>
+        <span class="cov8" title="1">userResponse := models.UserResponse{
+                Name:          userAuthenticated.Name,
+                LastName:      userAuthenticated.LastName,
+                Email:         userAuthenticated.Email,
+                Address:       userAuthenticated.Address,
+                PaymentMethod: userAuthenticated.PaymentMethod,
+                Role:          userAuthenticated.Role,
+        }
+        c.JSON(http.StatusOK, gin.H{"data": userResponse, "token": generateToken})</span>
+}
+
+// DeleteUserByID deletes a user from the system by its ID
+func DeleteUserByID(c *gin.Context) <span class="cov8" title="1">{
+        jwt := c.GetHeader("Authorization")
+        jwtService := services.NewJWTService()
+        jwtDecode, _ := jwtService.DecodeToken(strings.Replace(jwt, "Bearer ", "", 1))
+        id := c.Param("id")
+        if jwtDecode.ID == "" || jwtDecode.ID != id </span><span class="cov8" title="1">{
+                c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
+                return
+        }</span>
+        <span class="cov8" title="1">err := services.DeleteUserByIDService(id)
+        if err != nil </span><span class="cov8" title="1">{
+                c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+                return
+        }</span>
+        <span class="cov8" title="1">c.JSON(http.StatusOK, gin.H{"message": "User deleted successfully"})</span>
 }
 </pre>
 		

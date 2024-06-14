@@ -35,6 +35,12 @@ func UpdateUser(user *models.User) error {
 
 // DeleteUserByID deletes a user from the database by its ID and returns the error if any occurred
 func DeleteUserByID(id string) error {
+	// Check if the user exists
+	var user models.User
+	err := config.DB.First(&user, "id = ?", id).Error
+	if err != nil {
+		return err
+	}
 	// Delete a user by its ID
 	return config.DB.Where("id = ?", id).Delete(&models.User{}).Error
 }

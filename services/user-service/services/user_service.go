@@ -53,6 +53,6 @@ func GetAllUsersService() ([]models.User, error) {
 }
 
 // DeleteUseByIDService deletes a user from the database by its ID and returns the error if any occurred
-func DeleteUseByIDService(id string) error {
+func DeleteUserByIDService(id string) error {
 	return repositories.DeleteUserByID(id)
 }

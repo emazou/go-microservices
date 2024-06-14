@@ -137,6 +137,6 @@ func TestDeleteUserByIDService(t *testing.T) {
 	if err != nil {
 		t.Errorf("An error occurred: %v", err)
 	}
-	err = DeleteUseByIDService(users[0].ID)
+	err = DeleteUserByIDService(users[0].ID)
 	assert.Nil(t, err, "No error should occur")
 }
